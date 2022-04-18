@@ -10,5 +10,5 @@ export function log(...message) {
   if (silent) {
     return;
   }
-  console.log(chalk.green("[⛏ tracedrill]"), ...message);
+  console.log(chalk.green("[📊 tracex]"), ...message);
 }
