@@ -2,15 +2,15 @@ import * as fs from "fs";
 import streamChain from "stream-chain";
 import streamJson from "stream-json";
 import StreamArray from "stream-json/streamers/StreamArray.js";
-import { getPlugins } from "./plugin/getPlugins.js";
-import { debug } from "./util/log.js";
+import { getPlugins } from "../plugin/getPlugins.js";
+import { debug } from "../util/log.js";
 
 const { chain } = streamChain;
 const { parser } = streamJson;
 const { streamArray } = StreamArray;
 
 async function forEachTraceEvent(filename, cb) {
-  return new Promise((resolve) => {
+  return new Promise((resolve, reject) => {
     const pipeline = chain([
       fs.createReadStream(filename),
       parser(),
@@ -24,6 +24,11 @@ async function forEachTraceEvent(filename, cb) {
     pipeline.on("end", () => {
       resolve();
     });
+
+    pipeline.on("error", (e) => {
+      debug("stream", "error", e);
+      reject(e);
+    });
   });
 }
 
@@ -34,13 +39,9 @@ async function forEachTraceEvent(filename, cb) {
  * @param filename
  * @returns result object
  */
-export async function extractProfileMetrics(
-  filename,
-  { config, reportProgress = () => {} }
-) {
+export async function extractProfileMetrics(filename, { config }) {
   const plugins = getPlugins(config);
-  debug(filename, "Performing preExtract on trace");
-  reportProgress(1 / 3);
+  debug("extractProfileMetrics", filename, "Performing preExtract on trace");
 
   await forEachTraceEvent(filename, (event) => {
     plugins.forEach((plugin) => {
@@ -48,8 +49,7 @@ export async function extractProfileMetrics(
     });
   });
 
-  debug(filename, "Performing extract on trace");
-  reportProgress(1 / 3);
+  debug("extractProfileMetrics", filename, "Performing extract on trace");
 
   await forEachTraceEvent(filename, (event) => {
     plugins.forEach((plugin) => {
@@ -61,8 +61,11 @@ export async function extractProfileMetrics(
     .map((p) => p.report())
     .reduce((a, b) => ({ ...a, ...b }), {});
 
-  reportProgress(1 / 3);
-  debug(filename, `results ${JSON.stringify(results, null, 2)}`);
+  debug(
+    "extractProfileMetrics",
+    filename,
+    `results ${JSON.stringify(results, null, 2)}`
+  );
 
   return results;
 }

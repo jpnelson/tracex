@@ -1,6 +1,6 @@
 import * as cliProgress from "cli-progress";
 
-export function startProgressBar(total, title) {
+export function startProgressBar(total) {
   const bar = new cliProgress.SingleBar(
     {
       format: `[{bar}] {percentage}% | Duration: {duration}s`,
@@ -11,11 +11,13 @@ export function startProgressBar(total, title) {
 
   bar.start(total, 0);
 
-  const reportProgress = (stageCompletion) => {
-    bar.increment(stageCompletion);
+  const reportProgress = (increment = 1) => {
+    bar.increment(increment);
   };
 
-  const stopProgress = () => bar.stop();
+  const stopProgress = () => {
+    bar.stop();
+  };
 
   return { reportProgress, stopProgress };
 }

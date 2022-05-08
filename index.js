@@ -1,9 +1,8 @@
 import glob from "glob";
 
 import { getConfig } from "./util/config.js";
-import { log, setSilent } from "./util/log.js";
-import { extractProfileMetrics } from "./extractProfileMetrics.js";
-import { startProgressBar } from "./util/progress.js";
+import { debug, log, setSilent } from "./util/log.js";
+import { extractMetricsFromFiles } from "./extract/extractMetricsFromFiles.js";
 
 async function main() {
   const config = getConfig();
@@ -15,27 +14,17 @@ async function main() {
   const filePaths = glob.sync(file);
 
   log(`Parsing traces and extracting metrics from ${filePaths.length} files`);
-  const { reportProgress, stopProgress } = startProgressBar(filePaths.length);
 
-  const extractionPromises = filePaths.map(async (filePath) => {
-    const result = await extractProfileMetrics(filePath, {
-      config,
-      reportProgress,
-    });
-
-    return {
-      filePath,
-      result,
-    };
+  const results = await extractMetricsFromFiles(filePaths, {
+    config,
   });
 
-  const results = await Promise.allSettled(extractionPromises);
-  stopProgress();
+  debug("main", "results", results);
 
   log("======= Results =======");
   if (format === "csv") {
     const csvLines = [];
-    results.forEach(({ value: { result, filePath } }, i) => {
+    results.forEach(({ result, filename }, i) => {
       if (i === 0) {
         const resultCols = Object.keys(result)
           .map((key) =>
@@ -51,7 +40,7 @@ async function main() {
           resultCols.push(result[key][subKey]);
         });
       });
-      csvLines.push([filePath, ...resultCols]);
+      csvLines.push([filename, ...resultCols]);
     });
 
     console.log(csvLines.map((l) => l.join(",")).join("\n"));
