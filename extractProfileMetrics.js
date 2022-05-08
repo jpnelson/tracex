@@ -1,13 +1,12 @@
 import * as fs from "fs";
 import streamChain from "stream-chain";
 import streamJson from "stream-json";
-import Pick from "stream-json/filters/Pick.js";
 import StreamArray from "stream-json/streamers/StreamArray.js";
-import { log } from "./util/log.js";
+import { getPlugins } from "./plugin/getPlugins.js";
+import { debug } from "./util/log.js";
 
 const { chain } = streamChain;
 const { parser } = streamJson;
-const { pick } = Pick;
 const { streamArray } = StreamArray;
 
 async function forEachTraceEvent(filename, cb) {
@@ -35,86 +34,35 @@ async function forEachTraceEvent(filename, cb) {
  * @param filename
  * @returns result object
  */
-export async function extractProfileMetrics(filename, { urls, functions }) {
-  log(
-    `Extracting profile metrics: searching for urls: ${JSON.stringify(
-      urls
-    )} and functions: ${JSON.stringify(functions)}`
-  );
+export async function extractProfileMetrics(
+  filename,
+  { config, reportProgress = () => {} }
+) {
+  const plugins = getPlugins(config);
+  debug(filename, "Performing preExtract on trace");
+  reportProgress(1 / 3);
 
-  const relevantFunctionNodes = {};
-  const relevantUrlNodes = {};
-
-  log(`Parsing ${filename}`);
   await forEachTraceEvent(filename, (event) => {
-    if (event.name !== "ProfileChunk") {
-      return;
-    }
-    const callStackFunctionsFound = new Set();
-
-    event.args?.data?.cpuProfile?.nodes?.forEach((node) => {
-      urls.forEach((url) => {
-        if (node.callFrame?.url?.indexOf(url) > -1) {
-          relevantUrlNodes[url] = relevantUrlNodes[url] || new Set();
-          relevantUrlNodes[url].add(node.id);
-        }
-      });
-
-      functions.forEach((functionName) => {
-        if (
-          callStackFunctionsFound.has(functionName) ||
-          node.callFrame?.functionName?.indexOf(functionName) > -1
-        ) {
-          callStackFunctionsFound.add(functionName);
-          relevantFunctionNodes[functionName] =
-            relevantFunctionNodes[functionName] || new Set();
-          relevantFunctionNodes[functionName].add(node.id);
-        }
-      });
+    plugins.forEach((plugin) => {
+      plugin.preExtract(event);
     });
   });
 
-  log("Trace parsed and relevant nodes identified");
-
-  const results = {};
-
-  function count(type, name, field, amount = 1) {
-    results[`${type}.${name}`] = results[`${type}.${name}`] || {
-      timeTotal: 0,
-      samplesPresent: 0,
-      sampleTotal: 0,
-    };
-    results[`${type}.${name}`][field] += amount;
-  }
+  debug(filename, "Performing extract on trace");
+  reportProgress(1 / 3);
 
   await forEachTraceEvent(filename, (event) => {
-    event.args?.data?.cpuProfile?.samples?.forEach((sample, i) => {
-      urls.forEach((url) => {
-        if (relevantUrlNodes[url] && relevantUrlNodes[url].has(sample)) {
-          count("url", url, "timeTotal", event.args?.data?.timeDeltas[i] ?? 0);
-          count("url", url, "samplesPresent");
-        }
-        count("url", url, "sampleTotal");
-      });
-      functions.forEach((functionName) => {
-        if (
-          relevantFunctionNodes[functionName] &&
-          relevantFunctionNodes[functionName].has(sample)
-        ) {
-          count(
-            "function",
-            functionName,
-            "timeTotal",
-            event.args?.data?.timeDeltas[i] ?? 0
-          );
-          count("function", functionName, "samplesPresent");
-        }
-        count("function", functionName, "sampleTotal");
-      });
+    plugins.forEach((plugin) => {
+      plugin.extract(event);
     });
   });
 
-  log(`results ${JSON.stringify(results, null, 2)}`);
+  const results = plugins
+    .map((p) => p.report())
+    .reduce((a, b) => ({ ...a, ...b }), {});
+
+  reportProgress(1 / 3);
+  debug(filename, `results ${JSON.stringify(results, null, 2)}`);
 
   return results;
 }

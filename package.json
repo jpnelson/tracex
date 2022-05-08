@@ -1,16 +1,19 @@
 {
   "name": "tracex",
   "version": "1.0.0",
-  "description": "",
+  "description": "A tool for extracting metrics from browser traces",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "author": "",
+  "bin": "./index.js",
+  "author": "Josh Nelson",
   "license": "MIT",
   "type": "module",
   "dependencies": {
     "chalk": "^5.0.1",
+    "cli-progress": "^3.11.0",
+    "debug": "^4.3.4",
     "glob": "^8.0.1",
     "stream-chain": "^2.2.5",
     "stream-json": "^1.7.4",

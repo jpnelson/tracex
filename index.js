@@ -1,25 +1,26 @@
-import path from "path";
 import glob from "glob";
 
 import { getConfig } from "./util/config.js";
 import { log, setSilent } from "./util/log.js";
 import { extractProfileMetrics } from "./extractProfileMetrics.js";
+import { startProgressBar } from "./util/progress.js";
 
 async function main() {
-  const { file, functions, urls, format, silent } = getConfig();
+  const config = getConfig();
+  const { file, format, silent } = config;
   if (silent) {
     setSilent(silent);
   }
 
   const filePaths = glob.sync(file);
 
-  const functionsArray = functions.split(",").filter(Boolean);
-  const urlsArray = urls.split(",").filter(Boolean);
+  log(`Parsing traces and extracting metrics from ${filePaths.length} files`);
+  const { reportProgress, stopProgress } = startProgressBar(filePaths.length);
 
   const extractionPromises = filePaths.map(async (filePath) => {
     const result = await extractProfileMetrics(filePath, {
-      urls: urlsArray,
-      functions: functionsArray,
+      config,
+      reportProgress,
     });
 
     return {
@@ -29,7 +30,9 @@ async function main() {
   });
 
   const results = await Promise.allSettled(extractionPromises);
-  log("--- Results ---");
+  stopProgress();
+
+  log("======= Results =======");
   if (format === "csv") {
     const csvLines = [];
     results.forEach(({ value: { result, filePath } }, i) => {

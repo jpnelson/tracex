@@ -3,7 +3,7 @@ import yargs from "yargs";
 const yargv = yargs(process.argv.slice(2));
 
 yargv
-  .command("extract <file>", "extract trace data from a file", (yargs) => {
+  .command("* <file>", "Extract trace data from a file", (yargs) => {
     yargs.positional("file", {
       describe: "path to file to extract trace data from. May be a glob",
       type: "string",
