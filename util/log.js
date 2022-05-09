@@ -12,14 +12,14 @@ export function log(...message) {
     return;
   }
   // We log with console.error and reserve stdout for actual result output
-  console.error(chalk.green("[📊 tracex]"), ...message);
+  console.error(chalk.green("[traceX]"), ...message);
 }
 
 export function error(...message) {
   if (silent) {
     return;
   }
-  console.error(chalk.red("[📊 tracex]"), ...message);
+  console.error(chalk.red("[traceX]"), ...message);
 }
 
 export function debug(category, ...message) {
