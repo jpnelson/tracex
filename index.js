@@ -15,6 +15,8 @@ async function main() {
 
   log(`Parsing traces and extracting metrics from ${filePaths.length} files`);
 
+  debug("main", "config", config);
+
   const results = await extractMetricsFromFiles(filePaths, {
     config,
   });

@@ -22,6 +22,16 @@ yargv
       describe:
         "Comma separated list of functions to search for. May be partial matches",
     },
+    framerate: {
+      default: false,
+      type: "boolean",
+      describe: "Whether to collect framerate data",
+    },
+    plugins: {
+      default: "",
+      type: "string",
+      describe: "Plugin files. May be a (comma separated) glob",
+    },
     format: {
       default: "csv",
       type: "string",

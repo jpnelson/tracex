@@ -40,7 +40,7 @@ async function forEachTraceEvent(filename, cb) {
  * @returns result object
  */
 export async function extractProfileMetrics(filename, { config }) {
-  const plugins = getPlugins(config);
+  const plugins = await getPlugins(config);
   debug("extractProfileMetrics", filename, "Performing preExtract on trace");
 
   await forEachTraceEvent(filename, (event) => {
