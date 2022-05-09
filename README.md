@@ -2,13 +2,21 @@
 
 A parallel, pluggable utility to extract metric from browser traces.
 
+![Screenshot of tracex in a terminal](docs/screenshot.png)
+
 ## Features
 
 - **Fast**: tracex extracts metrics from large numbers of traces in parallel, and handles large traces gracefully through streaming.
 - **Pluggable**: tracex allows you to create your own specific metrics, and tweak their definitions. This allows you to experiment with custom metrics, or create your own.
 - **Graceful errors**: trace handles errors gracefully, allowing you to ignore or fix problems in individual trace files or traces.
 
+**✨ Use with [wpt-gauntlet](https://github.com/jpnelson/wpt-gauntlet) for an end-to-end benchmarking solution!**
+
 ## Usage
+
+To get started, you can install tracex locally, or run it using npx:
+
+$ npx tracex --help
 
 tracex can be run on a single profile, or a collection of profiles.
 

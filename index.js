@@ -49,7 +49,7 @@ async function main() {
   } else {
     console.log(
       JSON.stringify(
-        results.map((r) => r.value),
+        results.map((r) => r),
         null,
         2
       )
