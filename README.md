@@ -1,6 +1,6 @@
 # tracex
 
-A parallel, pluggable utility to extract metric from browser traces.
+A fast, pluggable utility to extract metric from browser traces.
 
 ![Screenshot of tracex in a terminal](docs/screenshot.png)
 
