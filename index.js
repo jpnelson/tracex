@@ -14,6 +14,7 @@ async function main() {
   }
 
   const filePaths = glob.sync(file);
+  debug("main", "filePaths", filePaths);
 
   log(`Parsing traces and extracting metrics from ${filePaths.length} files`);
 
@@ -28,23 +29,27 @@ async function main() {
   log("======= Results =======");
   if (format === "csv") {
     const csvLines = [];
-    results.forEach(({ result, filename }, i) => {
-      if (i === 0) {
-        const resultCols = Object.keys(result)
-          .map((key) =>
-            Object.keys(result[key]).map((subKey) => `${key}:${subKey}`)
-          )
-          .flat();
-        csvLines.push(["fileName", ...resultCols]);
-      }
-      const resultCols = [];
-      const keys = Object.keys(result);
-      keys.forEach((key) => {
+
+    const cols = new Set();
+
+    results.forEach(({ result }) => {
+      Object.keys(result).forEach((key) => {
         Object.keys(result[key]).forEach((subKey) => {
-          resultCols.push(result[key][subKey]);
+          cols.add(`${key}:${subKey}`);
         });
       });
-      csvLines.push([filename, ...resultCols]);
+    });
+    const orderedCols = [...cols.values()];
+
+    csvLines.push(["filename", ...orderedCols]);
+
+    results.forEach(({ result, filename }) => {
+      const csvLine = [filename];
+      orderedCols.forEach((col) => {
+        const [key, subKey] = col.split(":");
+        csvLine.push(result[key]?.[subKey]);
+      });
+      csvLines.push(csvLine);
     });
 
     console.log(csvLines.map((l) => l.join(",")).join("\n"));

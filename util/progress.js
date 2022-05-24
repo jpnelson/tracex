@@ -4,7 +4,7 @@ export function startProgressBar(total) {
   const bar = new cliProgress.SingleBar(
     {
       format: `[{bar}] {percentage}% | Duration: {duration}s`,
-      clearOnComplete: true,
+      clearOnComplete: false,
     },
     cliProgress.Presets.shades_classic
   );
